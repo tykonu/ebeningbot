@@ -30,6 +30,11 @@ The sound name will be the same that you use to play them in Discord, so make su
 
 To upload, you can use the bot command in Discord `.uploadsounds [LINK TO A DIRECT .ZIP FILE CONTAINING .MP3 FILES]`
 
+## Discordrb voice dependencies
+* [libsodium](https://github.com/shardlab/discordrb/wiki/Installing-libsodium)
+* A compiled libopus distribution for your system, anywhere the script can find it. See [here](https://github.com/shardlab/discordrb/wiki/Installing-libopus) for installation instructions.
+* [FFmpeg](https://www.ffmpeg.org/download.html) installed and in your PATH
+
 ## Deployment
 To start the bot, run the rake task `bundle exec rake bot:run`
 
