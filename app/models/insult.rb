@@ -1,0 +1,2 @@
+class Insult < ApplicationRecord
+end
