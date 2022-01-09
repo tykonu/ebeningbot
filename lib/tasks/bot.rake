@@ -2,13 +2,12 @@ namespace :bot do
   desc 'Run the Discord bot'
   task run: :environment do
     require 'discordrb'
-    require 'open-uri'
-    require 'zip'
+    include Bot::BotHelper
 
     discord_bot_token = Rails.application.credentials[Rails.env.to_sym][:discord_bot_token]
     return 'Aborting - could not find the Discord bot token in the credentials file!' if discord_bot_token.blank?
 
-    bot = Discordrb::Bot.new token: discord_bot_token
+    bot = Discordrb::Bot.new(token: discord_bot_token, intents: %i[servers server_messages server_voice_states])
 
     bot.message(start_with: '.addentrance') do |event|
       sound_name = event.message.content.split(' ')&.second&.downcase
@@ -72,40 +71,23 @@ namespace :bot do
     end
 
     bot.message(content: '.help') do |event|
-      message = "Bot usage:
-`.list` - displays the list of all available sounds
-`.s [sound]` - plays the sound
-`.addentrance [sound]` - adds the sound to your entrance
-`.rmentrance` - removes any entrance sound you might have
-`.addinsult [insult text]` - adds an insult to be used when an user does something wrong with the bot (e.g. non-existent sound). Pro tip: if you want to dynamically address the user in the insult, use [[name]] in the insult."
+      message = help_message
       bot.send_message(event.channel, message)
     end
 
     bot.message(content: '.connect') do |event|
-      # The `voice_channel` method returns the voice channel the user is currently in, or `nil` if the user is not in a
-      # voice channel.
       channel = event.user.voice_channel
 
-      # Here we return from the command unless the channel is not nil (i.e. the user is in a voice channel). The `next`
-      # construct can be used to exit a command prematurely, and even send a message while we're at it.
       unless channel
         bot.send_message(event.channel, "You're not in any voice channel!")
         next
       end
 
-      # The `voice_connect` method does everything necessary for the bot to connect to a voice channel. Afterwards the bot
-      # will be connected and ready to play stuff back.
       bot.voice_connect(channel)
       bot.send_message(event.channel, "Connected to voice channel: #{channel.name}")
     end
 
-    # A simple command that plays back an mp3 file.
     bot.message(start_with: '.s') do |event|
-      # `event.voice` is a helper method that gets the correct voice bot on the server the bot is currently in. Since a
-      # bot may be connected to more than one voice channel (never more than one on the same server, though), this is
-      # necessary to allow the differentiation of servers.
-      #
-      # It returns a `VoiceBot` object that methods such as `play_file` can be called on.
       filename = event.message.content.split(' ')&.second
       next unless filename
 
@@ -119,11 +101,7 @@ namespace :bot do
       voice_bot = event.voice.presence || join_voice(bot, event)
       next unless voice_bot
 
-      sound_file = Tempfile.new
-      sound_file.binmode
-      sound_file.write(sound.file)
-
-      voice_bot.play_file(sound_file.path)
+      play_sound(voice_bot, sound)
     end
 
     # DCA is a custom audio format developed by a couple people from the Discord API community (including myself, meew0).
@@ -160,29 +138,13 @@ namespace :bot do
       bot.send_message(event.channel, 'Wait, doing my thing...')
 
       begin
-        zipfile = URI.parse(url).open
+        zip_file = download_zip_from_url(url)
       rescue StandardError => e
         bot.send_message(event.channel, "Error opening the URL: #{e.message}")
         next
       end
 
-      failed_uploads = []
-      successful_uploads = []
-
-      Zip::File.open_buffer(zipfile) do |zip_file_content|
-        zip_file_content.each do |f|
-          unless f.name.end_with?('.mp3')
-            failed_uploads << "#{f.name} - wrong file type"
-            next
-          end
-
-          if create_sound_object_with_file(f)
-            successful_uploads << f.name
-          else
-            failed_uploads << f.name
-          end
-        end
-      end
+      successful_uploads, failed_uploads = create_sounds_from_zip_file(zip_file)
 
       if successful_uploads.any?
         file_list = "```Successfully uploaded these sounds:\n------------------\n\n"
@@ -220,10 +182,7 @@ namespace :bot do
     end
 
     bot.voice_state_update do |event|
-      next unless event.channel
-      next if event.user.id == bot.profile.id
-      next if event.old_channel.present? && event.channel.present?
-      next unless event.old_channel.blank? && event.channel.present?
+      next unless user_joined_voice_channel?(bot, event)
 
       sound_name = UserPreference.find_by_user_id(event.user.id)&.sound_name
       next unless sound_name
@@ -231,15 +190,10 @@ namespace :bot do
       voice_bot = bot.voice(event.channel.server.id).presence || join_voice_state_update_channel(bot, event)
       next unless voice_bot
 
-      file_binary = Sound.find_by_name(sound_name)&.file
-      next unless file_binary
+      sound = Sound.find_by_name(sound_name)
+      next unless sound.present?
 
-      sound_file = Tempfile.new
-      sound_file.binmode
-      sound_file.write(file_binary)
-
-      sleep 1
-      voice_bot.play_file(sound_file.path)
+      play_sound(voice_bot, sound, sleep_n_seconds: 1)
     end
 
     bot.run
@@ -247,6 +201,7 @@ namespace :bot do
 
   def join_voice(bot, event)
     channel = event.user.voice_channel
+
     unless channel
       event.respond "#{random_insult_for(event.user.username)} You're not in any voice channel!"
       return
@@ -265,30 +220,5 @@ namespace :bot do
 
     bot.voice_connect(channel)
     bot.voice(event.channel.server.id)
-  end
-
-  def random_insult_for(username)
-    Insult.order('RANDOM()').first.content.gsub('[[name]]', username)
-  end
-
-  def create_sound_object_with_file(file)
-    return false unless file.name.end_with?('.mp3')
-
-    path = ''
-    Tempfile.open(file.name) do |tmp|
-      file.extract(tmp.path) { true }
-      path = tmp.path
-    end
-    sound = Sound.create(name: file.name.sub('.mp3', ''), file: File.binread(path))
-    sound.save
-  end
-
-  def admin_permissions?(user_id)
-    {
-      '295222341862948872' => 'yago',
-      '683678616994840628' => 'rasmus',
-      '318091282214027274' => 'walnut',
-      '810534867846299668' => 'wang'
-    }[user_id.to_s].present?
   end
 end
