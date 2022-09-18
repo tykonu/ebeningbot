@@ -1,1 +1,1 @@
-web: bundle exec rake bot:run
+worker: bundle exec rake bot:run

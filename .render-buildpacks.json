@@ -1,0 +1,8 @@
+{
+  "buildpacks": [
+    "heroku/ruby",
+    "https://github.com/challengee/heroku-buildpack-libsodium.git",
+    "https://github.com/Crazycatz00/heroku-buildpack-libopus.git",
+    "https://github.com/kitcast/buildpack-ffmpeg.git"
+  ]
+}
