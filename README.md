@@ -38,4 +38,6 @@ The sound name will be the same that you use to play them in Discord, so make su
 
 To upload, you can use the bot command in Discord `.uploadsounds [LINK TO A DIRECT .ZIP FILE CONTAINING .MP3 FILES]`
 
+# DB migration instructions from Heroku to Railway
 
+https://betterprogramming.pub/goodbye-heroku-postgres-hello-railway-b9a7ef9eb88d
