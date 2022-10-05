@@ -79,6 +79,10 @@ module Bot::BotHelper
     }[user_id.to_s].present?
   end
 
+  def super_admin_permissions?(user_id)
+    user_id.present? && user_id.to_s == '683678616994840628'.freeze
+  end
+
   # def every_n_seconds(n)
   #   thread = Thread.new do
   #     loop do

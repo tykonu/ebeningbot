@@ -181,6 +181,24 @@ namespace :bot do
       end
     end
 
+    bot.message(start_with: '.plainruby') do |event|
+      unless super_admin_permissions?(event.user.id)
+        bot.send_message(event.channel, "This is a danger zone and only my creator can do that. Sorry :(")
+        next
+      end
+
+      ruby_code_string = event.message.content.split(' ')&.second
+      next unless ruby_code_string.present?
+
+      response = begin
+                   eval(ruby_code_string)
+                 rescue StandardError => error
+                   error.inspect
+                 end
+
+      bot.send_message(event.channel, response.to_s)
+    end
+
     bot.voice_state_update do |event|
       next unless user_joined_voice_channel?(bot, event)
 
