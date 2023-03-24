@@ -1,5 +1,7 @@
 namespace :bot do
   desc 'Run the Discord bot'
+  # Invite link: https://discord.com/api/oauth2/authorize?client_id=823159664257662999&permissions=3263488&redirect_uri=https%3A%2F%2Fwww.google.com&response_type=code&scope=identify%20bot
+
   task run: :environment do
     require 'discordrb'
     include Bot::BotHelper
@@ -77,6 +79,7 @@ namespace :bot do
 
     bot.message(content: '.connect') do |event|
       channel = event.user.voice_channel
+      bot.send_message(event.channel, "ENV['DISCORDRB_SSL_VERIFY_NONE']: #{ENV['DISCORDRB_SSL_VERIFY_NONE']}")
 
       unless channel
         bot.send_message(event.channel, "You're not in any voice channel!")
