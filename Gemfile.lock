@@ -1,7 +1,7 @@
 GIT
-  remote: https://github.com/Dakurei/discordrb
-  revision: 65ebbe163fb4992a010f07e88014487bb6ad790f
-  branch: fix_broken_ip_discovery
+  remote: https://github.com/shardlab/discordrb
+  revision: 984826cbc1378620f63dc83958734bbd3926b9f2
+  ref: 984826c
   specs:
     discordrb (3.4.2)
       discordrb-webhooks (~> 3.4.2)
