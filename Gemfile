@@ -29,7 +29,7 @@ gem 'jbuilder', '~> 2.7'
 gem 'bootsnap', '>= 1.4.4', require: false
 
 # Discord API library
-gem 'discordrb', git: 'https://github.com/shardlab/discordrb', ref: '984826c'
+gem 'discordrb', git: 'https://github.com/shardlab/discordrb', ref: 'aee6c83'
 
 # Unzip files
 gem 'rubyzip', '~> 2.3'
