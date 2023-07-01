@@ -107,6 +107,39 @@ namespace :bot do
       play_sound(voice_bot, sound)
     end
 
+    bot.message(start_with: '.mpthree') do |event|
+      filename = Rails.root.join('lib', 'assets', 'sounds', "#{event.message.content.split(' ')&.second}.mp3")
+
+      unless File.exist?(filename)
+        bot.send_message(event.channel, "#{random_insult_for(event.user.username)} This sound doesn't exist.")
+        next
+      end
+
+      voice_bot = event.voice.presence || join_voice(bot, event)
+      next unless voice_bot
+
+      # Since the DCA format is non-standard (i.e. ffmpeg doesn't support it), a separate method other than `play_file` has
+      # to be used to play DCA files back. `play_dca` fulfills that role.
+      voice_bot.play_file(filename.to_s)
+    end
+
+    bot.message(start_with: '.mpthreelocal') do |event|
+      filename = Rails.root.join('lib', 'assets', 'sounds', "#{event.message.content.split(' ')&.second}.mp3")
+
+      unless File.exist?(filename)
+        bot.send_message(event.channel, "#{random_insult_for(event.user.username)} This sound doesn't exist.")
+        next
+      end
+
+      voice_bot = event.voice.presence || join_voice(bot, event)
+      next unless voice_bot
+
+      # Since the DCA format is non-standard (i.e. ffmpeg doesn't support it), a separate method other than `play_file` has
+      # to be used to play DCA files back. `play_dca` fulfills that role.
+      voice_bot.play_sound_from_local_storage(voice_bot, filename)
+    end
+
+
     # DCA is a custom audio format developed by a couple people from the Discord API community (including myself, meew0).
     # It represents the audio data exactly as Discord wants it in a format that is very simple to parse, so libraries can
     # very easily add support for it. It has the advantage that absolutely no transcoding has to be done, so it is very
