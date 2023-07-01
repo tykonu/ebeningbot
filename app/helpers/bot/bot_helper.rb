@@ -13,7 +13,7 @@ module Bot::BotHelper
 
   def play_sound(voice_bot, sound, sleep_n_seconds: 0)
     begin
-      sound_file = Tempfile.new
+      sound_file = Tempfile.new("#{sound.name}.mp3", encoding: 'ascii-8bit')
       sound_file.binmode
       sound_file.write(sound.file)
 
