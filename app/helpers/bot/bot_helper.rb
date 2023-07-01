@@ -12,18 +12,18 @@ module Bot::BotHelper
   end
 
   def play_sound(voice_bot, sound, sleep_n_seconds: 0)
-    begin
-      sound_file = Tempfile.new("#{sound.name}.mp3", encoding: 'ascii-8bit')
+    #begin
+      sound_file = Tempfile.create("#{sound.name}.mp3", encoding: 'ascii-8bit')
       sound_file.binmode
       sound_file.write(sound.file)
 
       sleep sleep_n_seconds if sleep_n_seconds.positive?
 
       voice_bot.play_file(sound_file.path)
-    ensure
-      sound_file.close
-      sound_file.unlink
-    end
+    #ensure
+    #  sound_file.close
+    #  sound_file.unlink
+    #end
   end
 
   def download_zip_from_url(url)
