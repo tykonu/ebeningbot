@@ -79,7 +79,7 @@ namespace :bot do
 
     bot.message(content: '.connect') do |event|
       channel = event.user.voice_channel
-      bot.send_message(event.channel, "ENV['DISCORDRB_SSL_VERIFY_NONE']: #{ENV['DISCORDRB_SSL_VERIFY_NONE']}")
+      bot.send_message(event.channel, "Connecting...")
 
       unless channel
         bot.send_message(event.channel, "You're not in any voice channel!")
