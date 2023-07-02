@@ -263,10 +263,15 @@ namespace :bot do
       voice_bot = bot.voice(event.channel.server.id).presence || join_voice_state_update_channel(bot, event)
       next unless voice_bot
 
-      sound = Sound.find_by_name(sound_name)
-      next unless sound.present?
+      filename = Rails.root.join('lib', 'assets', 'sounds', 'dca', "#{sound_name}.dca")
 
-      play_sound(voice_bot, sound, sleep_n_seconds: 1)
+      next unless File.exist?(filename)
+
+      voice_bot.play_dca(filename)
+      #sound = Sound.find_by_name(sound_name)
+      #next unless sound.present?
+
+      #play_sound(voice_bot, sound, sleep_n_seconds: 1)
     end
 
     bot.run
