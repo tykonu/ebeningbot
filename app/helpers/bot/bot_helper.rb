@@ -19,7 +19,7 @@ module Bot::BotHelper
 
       sleep sleep_n_seconds if sleep_n_seconds.positive?
 
-      voice_bot.play_file(sound_file.path)
+      voice_bot.play_io(sound_file.path)
     ensure
       sound_file.close
       sound_file.unlink
@@ -35,7 +35,7 @@ module Bot::BotHelper
 
       sleep sleep_n_seconds if sleep_n_seconds.positive?
 
-      voice_bot.play_file(sound_file.path)
+      voice_bot.play_io(sound_file.path)
     ensure
       sound_file.close
       sound_file.unlink

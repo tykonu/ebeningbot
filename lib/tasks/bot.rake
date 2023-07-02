@@ -120,7 +120,7 @@ namespace :bot do
 
       # Since the DCA format is non-standard (i.e. ffmpeg doesn't support it), a separate method other than `play_file` has
       # to be used to play DCA files back. `play_dca` fulfills that role.
-      voice_bot.play_file(filename.to_s)
+      voice_bot.play_io(filename.to_s)
     end
 
     bot.message(start_with: '.mpthreelocal') do |event|
