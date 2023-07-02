@@ -90,7 +90,7 @@ namespace :bot do
       bot.send_message(event.channel, "Connected to voice channel: #{channel.name}")
     end
 
-    bot.message(start_with: '.s') do |event|
+    bot.message(start_with: '.mpthree') do |event|
       filename = event.message.content.split(' ')&.second
       next unless filename
 
@@ -107,7 +107,7 @@ namespace :bot do
       play_sound(voice_bot, sound)
     end
 
-    bot.message(start_with: '.mpthree') do |event|
+    bot.message(start_with: '.mpthreedirect') do |event|
       filename = Rails.root.join('lib', 'assets', 'sounds', "#{event.message.content.split(' ')&.second}.mp3")
 
       unless File.exist?(filename)
@@ -123,7 +123,7 @@ namespace :bot do
       voice_bot.play_io(filename.to_s)
     end
 
-    bot.message(start_with: '.mpthreelocal') do |event|
+    bot.message(start_with: '.mpthreetempfile') do |event|
       filename = Rails.root.join('lib', 'assets', 'sounds', "#{event.message.content.split(' ')&.second}.mp3")
 
       unless File.exist?(filename)
@@ -162,11 +162,30 @@ namespace :bot do
       voice_bot.play_dca(filename)
     end
 
+    bot.message(start_with: '.s') do |event|
+      filename = Rails.root.join('lib', 'assets', 'sounds', 'dca', "#{event.message.content.split(' ')&.second}.dca")
+
+      unless File.exist?(filename)
+        bot.send_message(event.channel, "#{random_insult_for(event.user.username)} This sound doesn't exist.")
+        next
+      end
+
+      voice_bot = event.voice.presence || join_voice(bot, event)
+      next unless voice_bot
+
+      # Since the DCA format is non-standard (i.e. ffmpeg doesn't support it), a separate method other than `play_file` has
+      # to be used to play DCA files back. `play_dca` fulfills that role.
+      voice_bot.play_dca(filename)
+    end
+
+
     bot.message(start_with: '.uploadsounds') do |event|
       unless admin_permissions?(event.user.id)
         bot.send_message(event.channel, "You don't have the permission to upload sounds.")
         next
       end
+
+      bot.send_message(event.channel, "Since something is broken with the bot, I cannot play your sounds uploaded via this command. They will still be uploaded for later use, but right now I can only play sounds directly added by Rasmus :(")
 
       url = event.message.content.split(' ')&.second
       next unless url
