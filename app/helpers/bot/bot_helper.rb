@@ -16,10 +16,11 @@ module Bot::BotHelper
       sound_file = Tempfile.new
       sound_file.binmode
       sound_file.write(sound.file)
+      sound_file.rewind
 
       sleep sleep_n_seconds if sleep_n_seconds.positive?
 
-      voice_bot.play_io(sound_file.path)
+      voice_bot.play_file(sound_file.path)
     ensure
       sound_file.close
       sound_file.unlink
@@ -30,8 +31,8 @@ module Bot::BotHelper
     begin
       sound_file = Tempfile.new
       sound_file.binmode
-
       sound_file.write(File.read(filename))
+      sound_file.rewind
 
       sleep sleep_n_seconds if sleep_n_seconds.positive?
 

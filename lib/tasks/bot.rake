@@ -90,7 +90,7 @@ namespace :bot do
       bot.send_message(event.channel, "Connected to voice channel: #{channel.name}")
     end
 
-    bot.message(start_with: '.s') do |event|
+    bot.message(start_with: '.mpthree') do |event|
       filename = event.message.content.split(' ')&.second
       next unless filename
 
@@ -162,7 +162,7 @@ namespace :bot do
       voice_bot.play_dca(filename)
     end
 
-    bot.message(start_with: '.mpthree') do |event|
+    bot.message(start_with: '.dca') do |event|
       filename = Rails.root.join('lib', 'assets', 'sounds', 'dca', "#{event.message.content.split(' ')&.second}.dca")
 
       unless File.exist?(filename)
