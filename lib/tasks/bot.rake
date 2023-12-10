@@ -146,7 +146,7 @@ namespace :bot do
     # light on CPU in comparison to `play_file`.
     #
     # A conversion utility that converts existing audio files to DCA can be found here: https://github.com/RaymondSchnyder/dca-rs
-    bot.message(start_with: '.dca') do |event|
+    bot.message(start_with: '.s') do |event|
       filename = Rails.root.join('lib', 'assets', 'sounds', 'dca', "#{event.message.content.split(' ')&.second}.dca")
 
       unless File.exist?(filename)
@@ -162,7 +162,7 @@ namespace :bot do
       voice_bot.play_dca(filename)
     end
 
-    bot.message(start_with: '.dca') do |event|
+    bot.message(start_with: '.mpthree') do |event|
       filename = Rails.root.join('lib', 'assets', 'sounds', 'dca', "#{event.message.content.split(' ')&.second}.dca")
 
       unless File.exist?(filename)
