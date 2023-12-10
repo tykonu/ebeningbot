@@ -90,7 +90,7 @@ namespace :bot do
       bot.send_message(event.channel, "Connected to voice channel: #{channel.name}")
     end
 
-    bot.message(start_with: '.mpthree') do |event|
+    bot.message(start_with: '.s') do |event|
       filename = event.message.content.split(' ')&.second
       next unless filename
 
@@ -162,7 +162,7 @@ namespace :bot do
       voice_bot.play_dca(filename)
     end
 
-    bot.message(start_with: '.s') do |event|
+    bot.message(start_with: '.dca') do |event|
       filename = Rails.root.join('lib', 'assets', 'sounds', 'dca', "#{event.message.content.split(' ')&.second}.dca")
 
       unless File.exist?(filename)
@@ -185,7 +185,7 @@ namespace :bot do
         next
       end
 
-      bot.send_message(event.channel, "Since something is broken with the bot, I cannot play your sounds uploaded via this command. They will still be uploaded for later use, but right now I can only play sounds directly added by Rasmus :(")
+      # bot.send_message(event.channel, "Since something is broken with the bot, I cannot play your sounds uploaded via this command. They will still be uploaded for later use, but right now I can only play sounds directly added by Rasmus :(")
 
       url = event.message.content.split(' ')&.second
       next unless url
@@ -255,6 +255,8 @@ namespace :bot do
     end
 
     bot.voice_state_update do |event|
+      GC.start # Just help free up some memory
+
       next unless user_joined_voice_channel?(bot, event)
 
       sound_name = UserPreference.find_by_user_id(event.user.id)&.sound_name
