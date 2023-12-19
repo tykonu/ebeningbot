@@ -147,9 +147,12 @@ namespace :bot do
     #
     # A conversion utility that converts existing audio files to DCA can be found here: https://github.com/RaymondSchnyder/dca-rs
     bot.message(start_with: '.s') do |event|
-      filename = Rails.root.join('lib', 'assets', 'sounds', 'dca', "#{event.message.content.split(' ')&.second}.dca")
+      filename = event.message.content.split(' ')&.second
+      next unless filename
 
-      unless File.exist?(filename)
+      sound = Sound.find_by_name(filename.downcase)
+
+      unless sound.present?
         bot.send_message(event.channel, "#{random_insult_for(event.user.username)} This sound doesn't exist.")
         next
       end
@@ -157,9 +160,7 @@ namespace :bot do
       voice_bot = event.voice.presence || join_voice(bot, event)
       next unless voice_bot
 
-      # Since the DCA format is non-standard (i.e. ffmpeg doesn't support it), a separate method other than `play_file` has
-      # to be used to play DCA files back. `play_dca` fulfills that role.
-      voice_bot.play_dca(filename)
+      play_sound(voice_bot, sound)
     end
 
     bot.message(start_with: '.dca') do |event|
@@ -177,7 +178,6 @@ namespace :bot do
       # to be used to play DCA files back. `play_dca` fulfills that role.
       voice_bot.play_dca(filename)
     end
-
 
     bot.message(start_with: '.uploadsounds') do |event|
       unless admin_permissions?(event.user.id)
