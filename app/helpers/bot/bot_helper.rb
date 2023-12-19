@@ -50,11 +50,17 @@ module Bot::BotHelper
   def create_sounds_from_zip_file(zip_file)
     failed_uploads = []
     successful_uploads = []
+    file_name_regex = /\A[a-z0-9]*\.mp3\z/
 
     Zip::File.open_buffer(zip_file) do |zip_file_content|
       zip_file_content.each do |f|
         unless f.name.end_with?('.mp3')
           failed_uploads << "#{f.name} - wrong file type"
+          next
+        end
+
+        unless f.name.match?(file_name_regex)
+          failed_uploads << "#{f.name} - invalid name"
           next
         end
 
