@@ -236,6 +236,29 @@ namespace :bot do
       end
     end
 
+    bot.message(start_with: '.rnsound') do |event|
+      unless admin_permissions?(event.user.id)
+        bot.send_message(event.channel, "You don't have the permission to rename sounds.")
+        next
+      end
+
+      msg_parts = event.message.content.split(' ')
+
+      next unless msg_parts && msg_parts.size == 3
+
+      sound_name = msg_parts.second
+      next unless sound_name
+
+      new_sound_name = msg_parts.third
+      next unless new_sound_name
+
+      if Sound.find_by_name(sound_name.downcase)&.update(name: new_sound_name)
+        bot.send_message(event.channel, "Sound #{sound_name} updated!")
+      else
+        bot.send_message(event.channel, "Couldn't update #{sound_name}.")
+      end
+    end
+
     bot.message(start_with: '.plainruby') do |event|
       unless super_admin_permissions?(event.user.id)
         bot.send_message(event.channel, "This is a danger zone and only my creator can do that. Sorry :(")
