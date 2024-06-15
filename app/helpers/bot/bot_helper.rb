@@ -13,11 +13,7 @@ module Bot::BotHelper
 
   def play_sound(voice_bot, sound, sleep_n_seconds: 0)
     begin
-      sound_file = Tempfile.new
-      sound_file.binmode
-      sound_file.write(sound.file)
-      sound_file.rewind
-
+      sound_file = sound.binary_with_adjusted_volume
       sleep sleep_n_seconds if sleep_n_seconds.positive?
 
       voice_bot.play_file(sound_file.path)

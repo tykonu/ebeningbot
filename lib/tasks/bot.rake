@@ -163,6 +163,48 @@ namespace :bot do
       play_sound(voice_bot, sound)
     end
 
+    bot.message(start_with: '.details') do |event|
+      filename = event.message.content.split(' ').second
+      next unless filename
+
+      sound = Sound.find_by_name(filename.downcase)
+
+      unless sound.present?
+        bot.send_message(event.channel, "#{random_insult_for(event.user.username)} This sound doesn't exist.")
+        next
+      end
+
+      max_volume, mean_volume = sound.max_and_mean_volume
+
+      bot.send_message(event.channel, "Sound name: #{sound.name}\nID: #{sound.id}\nCreated at: #{sound.created_at}\nUpdated at: #{sound.updated_at}\nVolume adjustment: #{sound.volume_adjustment.presence || 'none'}\nMax volume: #{max_volume}dB\nMean volume: #{mean_volume}dB")
+      next
+    end
+
+    bot.message(start_with: '.adjustvol') do |event|
+      _, filename, db_adjustment = event.message.content.split(' ')
+      next unless filename
+
+      sound = Sound.find_by_name(filename.downcase)
+
+      unless sound.present?
+        bot.send_message(event.channel, "#{random_insult_for(event.user.username)} This sound doesn't exist.")
+        next
+      end
+
+      if (db_adjustment = db_adjustment.to_f.round(2)).zero?
+        bot.send_message(event.channel, "#{random_insult_for(event.user.username)} Send me the decibels too!.")
+        next
+      end
+
+      if sound.adjust_volume!(db_adjustment)
+        bot.send_message(event.channel, "Sound #{sound.name} volume adjusted by #{db_adjustment}dB (from baseline)!")
+        next
+      else
+        bot.send_message(event.channel, "#{random_insult_for(event.user.username)} Sound #{sound.name} volume adjustment failed.")
+        next
+      end
+    end
+
     bot.message(start_with: '.dca') do |event|
       filename = Rails.root.join('lib', 'assets', 'sounds', 'dca', "#{event.message.content.split(' ')&.second}.dca")
 
@@ -288,10 +330,6 @@ namespace :bot do
       voice_bot = bot.voice(event.channel.server.id).presence || join_voice_state_update_channel(bot, event)
       next unless voice_bot
 
-      #filename = Rails.root.join('lib', 'assets', 'sounds', 'dca', "#{sound_name}.dca")
-      #next unless File.exist?(filename)
-      #voice_bot.play_dca(filename)
-      #
       sound = Sound.find_by_name(sound_name)
       next unless sound.present?
 
