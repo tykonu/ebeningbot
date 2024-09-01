@@ -1,4 +1,6 @@
 module Bot::BotHelper
+  FILE_NAME_REGEX = /\A[a-z0-9]*\.mp3\z/
+
   require 'open-uri'
   require 'zip'
 
@@ -39,51 +41,79 @@ module Bot::BotHelper
     end
   end
 
-  def download_zip_from_url(url)
-    URI.parse(url).open
+  def download_from_url(url)
+    f = URI.parse(url).open
+
+    {
+      filename: f.meta['content-disposition'].match(/filename=(\"?)(.+)\1/)[2],
+      content: f.read
+    }
   end
 
-  def create_sounds_from_zip_file(zip_file)
-    failed_uploads = []
+  def create_sounds_from_zip_or_mp3_files(files)
     successful_uploads = []
-    file_name_regex = /\A[a-z0-9]*\.mp3\z/
+    failed_uploads = []
 
-    Zip::File.open_buffer(zip_file) do |zip_file_content|
-      zip_file_content.each do |f|
-        unless f.name.end_with?('.mp3')
-          failed_uploads << "#{f.name} - wrong file type"
-          next
-        end
-
-        unless f.name.match?(file_name_regex)
-          failed_uploads << "#{f.name} - invalid name"
-          next
-        end
-
-        if create_sound_object_with_file(zip_file_content, f)
-          successful_uploads << f.name
-        else
-          failed_uploads << f.name
-        end
+    files.each do |file|
+      if file[:filename].end_with?('.mp3')
+        process_mp3_file(file, successful_uploads, failed_uploads)
+      elsif file[:filename].end_with?('.zip')
+        process_zip_file(file, successful_uploads, failed_uploads)
+      else
+        failed_uploads << "#{file[:filename]} - wrong file type"
       end
     end
 
     [successful_uploads, failed_uploads]
   end
 
-  def create_sound_object_with_file(zip_file_content, file)
-    return false unless file.name.end_with?('.mp3')
-
-    tempfile = Tempfile.new(file.name)
-    tempfile.binmode
-    tempfile.write zip_file_content.read(file)
-    tempfile.rewind
-    sound = Sound.create(name: file.name.sub('.mp3', ''), file: tempfile.read)
-    success = sound.save
-    tempfile.close
-    tempfile.unlink
-    success
+  def process_mp3_file(file, successful_uploads, failed_uploads)
+    if valid_file_name?(file[:filename])
+      if create_sound_object(file[:filename], file[:content])
+        successful_uploads << file[:filename]
+      else
+        failed_uploads << file[:filename]
+      end
+    else
+      failed_uploads << "#{file[:filename]} - invalid name"
+    end
   end
+
+  def process_zip_file(file, successful_uploads, failed_uploads)
+    Zip::File.open_buffer(file[:content]) do |zip_file_content|
+      zip_file_content.each do |entry|
+        process_zip_entry(zip_file_content, entry, successful_uploads, failed_uploads)
+      end
+    end
+  end
+
+  def process_zip_entry(zip_file_content, entry, successful_uploads, failed_uploads)
+    if !entry.name.end_with?('.mp3')
+      failed_uploads << "#{entry.name} - wrong file type"
+    elsif !valid_file_name?(entry.name)
+      failed_uploads << "#{entry.name} - invalid name"
+    else
+      if create_sound_object(entry.name, zip_file_content.read(entry))
+        successful_uploads << entry.name
+      else
+        failed_uploads << entry.name
+      end
+    end
+  end
+
+  def valid_file_name?(filename)
+    filename.match?(FILE_NAME_REGEX)
+  end
+
+  def create_sound_object(filename, content)
+    Tempfile.create(filename) do |tempfile|
+      tempfile.binmode
+      tempfile.write(content)
+      tempfile.rewind
+      Sound.create(name: filename.sub('.mp3', ''), file: tempfile.read).save
+    end
+  end
+
 
   def random_insult_for(username)
     Insult.order('RANDOM()').first&.content&.gsub('[[name]]', username) || ''

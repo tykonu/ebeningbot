@@ -227,21 +227,34 @@ namespace :bot do
         next
       end
 
-      # bot.send_message(event.channel, "Since something is broken with the bot, I cannot play your sounds uploaded via this command. They will still be uploaded for later use, but right now I can only play sounds directly added by Rasmus :(")
-
-      url = event.message.content.split(' ')&.second
-      next unless url
-
       bot.send_message(event.channel, 'Wait, doing my thing...')
 
+      files = []
+
       begin
-        zip_file = download_zip_from_url(url)
+        event.message.attachments.each do |attachment|
+          files << download_from_url(attachment.url)
+        end
       rescue StandardError => e
-        bot.send_message(event.channel, "Error opening the URL: #{e.message}")
+        bot.send_message(event.channel, "Error parsing attachments: #{e.message}")
+      end
+
+      url = event.message.content.split(' ')&.second
+
+      if url.present?
+        begin
+          files << download_from_url(url)
+        rescue StandardError => e
+          bot.send_message(event.channel, "Error opening the URL: #{e.message}")
+        end
+      end
+
+      if files.blank?
+        bot.send_message(event.channel, "You need to include a single .zip / .mp3 file as an URL or multiple .zip / .mp3 files as attachments.")
         next
       end
 
-      successful_uploads, failed_uploads = create_sounds_from_zip_file(zip_file)
+      successful_uploads, failed_uploads = create_sounds_from_zip_or_mp3_files(files)
 
       if successful_uploads.any?
         file_list = "```Successfully uploaded these sounds:\n------------------\n\n"
