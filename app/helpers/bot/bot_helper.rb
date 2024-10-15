@@ -5,12 +5,44 @@ module Bot::BotHelper
   require 'zip'
 
   def help_message
-    "Bot usage:
-`.list` - displays the list of all available sounds
-`.s [sound]` - plays the sound
-`.addentrance [sound]` - adds the sound to your entrance
-`.rmentrance` - removes any entrance sound you might have
-`.addinsult [insult text]` - adds an insult to be used when an user does something wrong with the bot (e.g. non-existent sound). Pro tip: if you want to dynamically address the user in the insult, use [[name]] in the insult."
+    <<~HELP
+      Bot Usage:
+      
+      General Commands:
+      `.list` - Displays the list of all available sounds.
+      `.s [sound]` - Plays the specified sound in your current voice channel.
+      `.say [text]` - Generates and plays text-to-speech audio in your current voice channel.
+      `.help` - Displays this help message.
+      `.connect` - Manually connects the bot to your current voice channel.
+      
+      Sound Management:
+      `.uploadsounds [URL]` - Uploads new sounds from a ZIP file or MP3 file(s).
+        - You can provide a direct URL to a ZIP or MP3 file.
+        - Alternatively, attach one or more MP3 files or a ZIP file to your message.
+        - MP3 files should be named with lowercase letters and numbers only, ending with .mp3
+        - ZIP files should contain properly named MP3 files.
+      `.rmsound [sound]` - Removes the specified sound (admin only).
+      `.rnsound [old_name] [new_name]` - Renames a sound (admin only).
+      `.details [sound]` - Displays details about the specified sound.
+      `.adjustvol [sound] [dB]` - Adjusts the volume of the specified sound by the given decibels (admin only).
+      
+      Entrance Sounds:
+      `.addentrance [sound]` - Sets the specified sound as your entrance sound.
+      `.rmentrance` - Removes your current entrance sound.
+      
+      Insult Management:
+      `.addinsult [insult text]` - Adds a new insult to the bot's repertoire.
+        - Use [[name]] in the insult text to dynamically insert the user's name.
+      
+      Admin Commands:
+      `.plainruby [ruby_code]` - Executes arbitrary Ruby code (super admin only, use with caution).
+      
+      Notes:
+      - For uploading sounds, ensure MP3 files are named properly (lowercase letters and numbers only, ending with .mp3).
+      - The bot will automatically play entrance sounds when users join a voice channel.
+      - Some commands are restricted to admins or super admins for security reasons.
+      - When using .say, the bot will join your voice channel if it's not already there.
+    HELP
   end
 
   def play_sound(voice_bot, sound, sleep_n_seconds: 0)
@@ -159,6 +191,29 @@ module Bot::BotHelper
   #     end
   #   end
   # end
+
+  def generate_and_play_tts(voice_bot, text)
+    encoded_text = URI.encode_www_form_component(text)
+    url = "https://cache-a.oddcast.com/tts/genC.php?EID=2&LID=2&VID=6&TXT=#{encoded_text}&EXT=mp3&FNAME=&ACC=15679&SceneID=2703396&HTTP_ERR="
+
+    begin
+      URI.open(url) do |audio_file|
+        temp_file = Tempfile.new(['tts', '.mp3'])
+        temp_file.binmode
+        temp_file.write(audio_file.read)
+        temp_file.rewind
+
+        voice_bot.play_file(temp_file.path)
+      ensure
+        temp_file.close
+        temp_file.unlink
+      end
+    rescue OpenURI::HTTPError => e
+      puts "Error fetching TTS audio: #{e.message}"
+    rescue StandardError => e
+      puts "An error occurred: #{e.message}"
+    end
+  end
 
   def user_joined_voice_channel?(bot, event)
     event.old_channel.blank? && event.channel.present? && event.user.id != bot.profile.id

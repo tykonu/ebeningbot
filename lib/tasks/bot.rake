@@ -146,7 +146,7 @@ namespace :bot do
     # light on CPU in comparison to `play_file`.
     #
     # A conversion utility that converts existing audio files to DCA can be found here: https://github.com/RaymondSchnyder/dca-rs
-    bot.message(start_with: '.s') do |event|
+    bot.message(start_with: '.s ') do |event|
       filename = event.message.content.split(' ')&.second
       next unless filename
 
@@ -161,6 +161,16 @@ namespace :bot do
       next unless voice_bot
 
       play_sound(voice_bot, sound)
+    end
+
+    bot.message(start_with: '.say') do |event|
+      text = event.message.content.sub('.say', '').strip
+      next if text.empty?
+
+      voice_bot = event.voice.presence || join_voice(bot, event)
+      next unless voice_bot
+
+      generate_and_play_tts(voice_bot, text)
     end
 
     bot.message(start_with: '.details') do |event|
