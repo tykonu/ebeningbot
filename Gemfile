@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
-ruby '3.3.1'
+ruby '3.4.1'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails', branch: 'main'
 gem 'rails', '~> 7.0', '>= 7.0.4.3'
@@ -29,7 +29,7 @@ gem 'puma', '~> 6.4', '>= 6.4.2'
 gem 'bootsnap', '>= 1.4.4', require: false
 
 # Discord API library
-gem 'discordrb', git: 'https://github.com/shardlab/discordrb', ref: '0f01116'
+gem 'discordrb', git: 'https://github.com/shardlab/discordrb'
 
 # Unzip files
 gem 'rubyzip', '~> 2.3'
